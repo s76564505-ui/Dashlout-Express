@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#123c35" />
+  <meta name="description" content="دشلوط إكسبريس - طلبك علينا.. وتوصيلك علينا" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+  <title>دشلوط إكسبريس</title>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="دشلوط إكسبريس">
+      <span class="brand-mark">د</span>
+      <span><strong>دشلوط إكسبريس</strong><small>طلبك علينا.. وتوصيلك علينا</small></span>
+    </a>
+    <nav><a href="/">الرئيسية</a><a href="#services">خدماتنا</a><button id="authBtn" class="btn btn-outline">دخول / حساب جديد</button></nav>
+  </header>
+  <main class="wrap">
+    <section id="hero" class="hero">
+      <div><span class="eyebrow">خدمات التوصيل والمشاوير</span><h1>مشوارك علينا،<br><em>من غير ما تتعب.</em></h1><p>اطلب توصيل أو مشوار داخل دشلوط والقرى القريبة، وتابع طلبك من مكان واحد.</p><a class="btn btn-primary" href="#booking">اطلب خدمة الآن</a></div>
+      <div class="hero-art"><div class="route">📍 ━━━━━ 🛵 ━━━━━ 📦</div><div class="hero-card"><b>دشلوط إكسبريس</b><span>طلبك علينا.. وتوصيلك علينا</span></div></div>
+    </section>
+    <section id="services" class="section"><div class="section-head"><div><span class="eyebrow">إيه اللي نقدر نعمله؟</span><h2>خدماتنا</h2></div></div><div class="service-grid">
+      <article class="service"><span>🛵</span><h3>توصيل الطلبات</h3><p>استلام وتسليم طلباتك بسهولة.</p></article>
+      <article class="service"><span>📦</span><h3>توصيل الأغراض</h3><p>إرسال واستلام الأغراض بين الأماكن.</p></article>
+      <article class="service"><span>🚗</span><h3>المشاوير والرحلات</h3><p>مشاوير داخل دشلوط وبين القرى.</p></article>
+    </div></section>
+    <section id="booking" class="section panel">
+      <div class="section-head"><div><span class="eyebrow">ابدأ طلبك</span><h2>اطلب خدمة</h2><p class="muted">سجّل دخولك الأول علشان نقدر نتابع طلبك.</p></div></div>
+      <div id="signedOut" class="notice">لازم تسجّل الدخول أو تعمل حساب جديد قبل إرسال الطلب.</div>
+      <form id="bookingForm" class="form-grid hidden">
+        <label>نوع الخدمة<select id="serviceType" required><option value="توصيل طلبات">توصيل طلبات</option><option value="توصيل أغراض">توصيل أغراض</option><option value="مشوار داخل دشلوط">مشوار داخل دشلوط</option><option value="مشوار بين القرى">مشوار بين القرى</option><option value="خدمة أخرى">خدمة أخرى</option></select></label>
+        <label>رقم الموبايل<input id="phone" type="tel" inputmode="tel" required maxlength="20" placeholder="01xxxxxxxxx" /></label>
+        <label>مكان الاستلام<input id="pickup" required maxlength="180" placeholder="اكتب المكان بالتفصيل" /></label>
+        <label>مكان التوصيل<input id="dropoff" required maxlength="180" placeholder="اكتب المكان بالتفصيل" /></label>
+        <label>اليوم والوقت<input id="when" type="datetime-local" required /></label>
+        <label class="full">تفاصيل إضافية<textarea id="details" rows="3" maxlength="700" placeholder="اكتب أي تفاصيل تساعدنا في تنفيذ طلبك"></textarea></label>
+        <button class="btn btn-primary full" type="submit">إرسال الطلب</button>
+      </form>
+    </section>
+    <section id="myOrders" class="section hidden"><div class="section-head"><div><span class="eyebrow">متابعة</span><h2>طلباتي</h2></div></div><div id="ordersList" class="orders-list"></div></section>
+    <section id="adminPanel" class="section hidden"><div class="section-head"><div><span class="eyebrow">لوحة التحكم</span><h2>إدارة الطلبات</h2><p class="muted">الطلبات المعروضة هنا خاصة بالإدارة.</p></div></div><div id="adminOrders" class="orders-list"></div></section>
+  </main>
+  <footer><strong>دشلوط إكسبريس</strong><span>طلبك علينا.. وتوصيلك علينا</span></footer>
+  <dialog id="authDialog"><form method="dialog" class="dialog-card" id="authForm"><button class="close" value="cancel" aria-label="إغلاق">×</button><span class="eyebrow">أهلاً بيك</span><h2 id="authTitle">تسجيل الدخول</h2><label>البريد الإلكتروني<input id="email" type="email" autocomplete="email" required /></label><label>كلمة المرور<input id="password" type="password" autocomplete="current-password" minlength="6" required /></label><button class="btn btn-primary" id="authSubmit" type="button">دخول</button><button class="text-btn" id="toggleAuth" type="button">إنشاء حساب جديد</button><button class="text-btn" id="resetPassword" type="button">نسيت كلمة المرور؟</button><p id="authMessage" class="message"></p></form></dialog>
+  <div id="toast" class="toast" role="status"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

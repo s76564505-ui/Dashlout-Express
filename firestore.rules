@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
+    }
+    match /admins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+    match /bookings/{bookingId} {
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.status == 'جديد'
+        && request.resource.data.quote == null
+        && request.resource.data.customerDecision == 'pending'
+        && request.resource.data.keys().hasOnly(['ownerUid','email','phone','serviceType','pickup','dropoff','when','details','status','quote','customerDecision','createdAt','updatedAt']);
+      allow read: if signedIn() && (resource.data.ownerUid == request.auth.uid || isAdmin());
+      allow update: if isAdmin() || (signedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && resource.data.status == 'بانتظار موافقة العميل'
+        && resource.data.customerDecision == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['customerDecision','updatedAt'])
+        && request.resource.data.customerDecision in ['approved','rejected']);
+      allow delete: if isAdmin();
+    }
+  }
+}
