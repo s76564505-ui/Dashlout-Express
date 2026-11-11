@@ -17,7 +17,7 @@ const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestor
 const $ = id => document.getElementById(id);
 let currentUser = null, isAdmin = false, isSignup = false;
 
-const adminRoute = location.pathname.replace(/\/$/, '').endsWith('/admin');
+const adminRoute = new URLSearchParams(location.search).get('admin') === '1' || location.pathname.replace(/\/$/, '').endsWith('/admin');
 const statuses = ['جديد','تسعير الطلب','بانتظار موافقة العميل','تم التأكيد','جاري التنفيذ','مكتمل','ملغي'];
 
 function toast(msg){
