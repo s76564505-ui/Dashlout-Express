@@ -14,7 +14,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
 const $ = id => document.getElementById(id);
 let currentUser = null, isAdmin = false, isSignup = false;
-const adminRoute = location.pathname.replace(/\/$/, '').endsWith('/admin');
+const adminRoute = new URLSearchParams(location.search).get('admin') === '1';
 const statuses = ['جديد','تسعير الطلب','بانتظار موافقة العميل','تم التأكيد','جاري التنفيذ','مكتمل','ملغي'];
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200)}
 function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
