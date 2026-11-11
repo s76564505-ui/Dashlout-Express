@@ -23,9 +23,8 @@ service cloud.firestore {
         && resource.data.ownerUid == request.auth.uid
         && resource.data.status == 'بانتظار موافقة العميل'
         && resource.data.customerDecision == 'pending'
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['customerDecision','updatedAt'])
-        && request.resource.data.customerDecision in ['approved','rejected']);
-      allow delete: if isAdmin();
-    }
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['customerDecision','status','updatedAt'])
+        && request.resource.data.customerDecision in ['approved','rejected']
+        && request.resource.data.status == (request.resource.data.customerDecision == 'approved' ? 'تم التأكيد' : 'ملغي');        }
   }
 }
