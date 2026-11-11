@@ -1,6 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
-import { getFirestore, collection, addDoc, doc, getDoc, getDocs, onSnapshot, query, where, orderBy, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
-import { getFirestore, collection, addDoc, doc, getDoc, getDocs, query, where, orderBy, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import { getFirestore, collection, addDoc, doc, getDoc, getDocs, onSnapshot, query, where, orderBy, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';ore.js';
 
 // إعدادات مشروع Firebase الخاص بدشلوط إكسبريس
 const firebaseConfig = {
