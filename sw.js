@@ -1,3 +1,54 @@
-const CACHE='dashlout-express-v1';
-self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./','./index.html','./style.css','./manifest.webmanifest','./icon.svg']))));
-self.addEventListener('fetch',e=>{if(e.request.method!=='GET'||new URL(e.request.url).origin!==location.origin)return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{const copy=res.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return res}).catch(()=>caches.match('./index.html'))))});
+const CACHE = 'dashlout-express-v2';
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE).then(cache =>
+      cache.addAll([
+        './',
+        './index.html',
+        './style.css',
+        './manifest.webmanifest',
+        './icon.svg'
+      ])
+    )
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.filter(key => key !== CACHE)
+          .map(key => caches.delete(key))
+      )
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  const url = new URL(request.url);
+
+  if (
+    request.method !== 'GET' ||
+    url.origin !== location.origin
+  ) return;
+
+  event.respondWith(
+    fetch(request).then(response => {
+      if (response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE).then(cache =>
+          cache.put(request, copy)
+        );
+      }
+      return response;
+    }).catch(() =>
+      caches.match(request).then(cached =>
+        cached || caches.match('./index.html')
+      )
+    )
+  );
+});
