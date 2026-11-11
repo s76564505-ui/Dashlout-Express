@@ -12,7 +12,7 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
 const $ = id => document.getElementById(id);
-let currentUser = null, isAdmin = false, isSignup = false;
+let currentUser = null, isAdmin = false, isSignup = false, stopAdminListener = null;
 const adminRoute = new URLSearchParams(location.search).get('admin') === '1';
 const statuses = ['جديد','تسعير الطلب','بانتظار موافقة العميل','تم التأكيد','جاري التنفيذ','مكتمل','ملغي'];
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200)}
@@ -27,7 +27,33 @@ function authError(code){return ({'auth/email-already-in-use':'البريد ده
 onAuthStateChanged(auth,async user=>{currentUser=user;isAdmin=false;$('authBtn').textContent=user?'تسجيل الخروج':'دخول / حساب جديد';$('signedOut').classList.toggle('hidden',!!user);$('bookingForm').classList.toggle('hidden',!user||adminRoute);$('myOrders').classList.toggle('hidden',!user||adminRoute);$('adminPanel').classList.add('hidden');if(!user){if(adminRoute)openAuth();return}try{const a=await getDoc(doc(db,'admins',user.uid));isAdmin=a.exists()&&a.data().active===true}catch(e){console.error(e)}if(adminRoute){if(!isAdmin){$('hero').classList.add('hidden');$('services').classList.add('hidden');$('booking').classList.add('hidden');$('myOrders').classList.add('hidden');$('adminPanel').classList.remove('hidden');$('adminOrders').innerHTML='<div class="notice">الحساب ده مش عنده صلاحية الإدارة.</div>';return}$('hero').classList.add('hidden');$('services').classList.add('hidden');$('booking').classList.add('hidden');$('myOrders').classList.add('hidden');$('adminPanel').classList.remove('hidden');loadAdmin()}else{ $('hero').classList.remove('hidden');$('services').classList.remove('hidden');loadMine()}});
 $('bookingForm').addEventListener('submit',async e=>{e.preventDefault();if(!currentUser)return openAuth();const btn=e.submitter;btn.disabled=true;try{await addDoc(collection(db,'bookings'),{ownerUid:currentUser.uid,email:currentUser.email||'',phone:$('phone').value.trim(),serviceType:$('serviceType').value,pickup:$('pickup').value.trim(),dropoff:$('dropoff').value.trim(),when:$('when').value,details:$('details').value.trim(),status:'جديد',quote:null,customerDecision:'pending',createdAt:serverTimestamp(),updatedAt:serverTimestamp()});e.target.reset();toast('طلبك وصل بنجاح، هنراجع السعر ونتواصل معاك.');loadMine()}catch(err){console.error(err);toast('ما قدرناش نبعت الطلب. راجع إعدادات قاعدة البيانات وحاول تاني.')}finally{btn.disabled=false}});
 async function loadMine(){if(!currentUser)return;try{const q=query(collection(db,'bookings'),where('ownerUid','==',currentUser.uid));const snap=await getDocs(q);$('ordersList').innerHTML=snap.empty?'<div class="notice">لسه معندكش طلبات. أول ما تبعت طلب هيظهر هنا.</div>':snap.docs.map(d=>{const x=d.data();return `<article class="order"><div class="order-top"><b>${esc(x.serviceType)}</b><span class="status">${esc(x.status)}</span></div><p>من: ${esc(x.pickup)} ← إلى: ${esc(x.dropoff)}</p><p>الموعد: ${esc(x.when||'غير محدد')} · رقم الطلب: ${esc(d.id.slice(0,8))}</p><p>السعر: <b>${x.quote==null?'لسه بيتحدد':esc(x.quote)+' جنيه'}</b></p>${x.status==='بانتظار موافقة العميل'&&x.customerDecision==='pending'?`<div class="order-actions"><button class="btn btn-primary" data-decision="approved" data-id="${d.id}">موافق على السعر</button><button class="btn btn-outline" data-decision="rejected" data-id="${d.id}">مش موافق</button></div>`:''}</article>`}).join('');}catch(e){console.error(e);$('ordersList').innerHTML='<div class="notice">تعذر تحميل الطلبات.</div>'}}
-$('ordersList').addEventListener('click',async e=>{const b=e.target.closest('[data-decision]');if(!b)return;try{await updateDoc(doc(db,'bookings',b.dataset.id),{customerDecision:b.dataset.decision,updatedAt:serverTimestamp()});toast('تم تسجيل ردك');loadMine()}catch(err){toast('تعذر تسجيل الرد')}});
-async function loadAdmin(){try{const q=query(collection(db,'bookings'),orderBy('createdAt','desc'));const snap=await getDocs(q);$('adminOrders').innerHTML=snap.empty?'<div class="notice">مفيش طلبات لحد دلوقتي.</div>':snap.docs.map(d=>{const x=d.data();return `<article class="order"><div class="order-top"><b>${esc(x.serviceType)} · ${esc(x.phone)}</b><span class="status">${esc(x.status)}</span></div><p>العميل: ${esc(x.email)} · UID: ${esc(x.ownerUid)}</p><p>من: ${esc(x.pickup)} ← إلى: ${esc(x.dropoff)}</p><p>الموعد: ${esc(x.when||'غير محدد')} · التفاصيل: ${esc(x.details||'لا توجد')}</p><p>قرار العميل: ${x.customerDecision==='approved'?'موافق':x.customerDecision==='rejected'?'رافض':'لم يرد بعد'}</p><div class="admin-controls"><input type="number" min="0" step="1" placeholder="السعر بالجنيه" value="${x.quote??''}" data-quote="${d.id}"><select data-status="${d.id}">${statuses.map(s=>`<option ${s===x.status?'selected':''}>${s}</option>`).join('')}</select><button class="btn btn-primary" data-save="${d.id}">حفظ</button></div></article>`}).join('')}catch(e){console.error(e);$('adminOrders').innerHTML='<div class="notice">تعذر تحميل الطلبات. تأكد من نشر قواعد Firestore وإنشاء صلاحية الإدارة.</div>'}}
-$('adminOrders').addEventListener('click',async e=>{const b=e.target.closest('[data-save]');if(!b)return;const id=b.dataset.save,quoteInput=document.querySelector(`[data-quote="${id}"]`),statusInput=document.querySelector(`[data-status="${id}"]`),raw=quoteInput.value;const quote=raw===''?null:Number(raw);if(quote!==null&&(!Number.isFinite(quote)||quote<0)){toast('اكتب سعر صحيح');return}let status=statusInput.value;if(quote!==null&&status==='جديد')status='بانتظار موافقة العميل';try{const patch={quote,status,updatedAt:serverTimestamp()};if(status==='بانتظار موافقة العميل')patch.customerDecision='pending';await updateDoc(doc(db,'bookings',id),patch);toast('تم حفظ التعديلات');loadAdmin()}catch(err){console.error(err);toast('تعذر الحفظ. راجع قواعد Firestore.')}});
-if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+$('ordersList').addEventListener('click',async e=>{const b=e.target.closest('[data-decision]');if(!b)return;try{await updateDoc(doc(db,'bookings',b.dataset.id),{customerDecision:b.dataset.decision,updatedAt:serverTimestamp()});toast('تم تسجيل ردك');loadMine()}catch(err){toast('تعذر تسجيل ??''}" data-quote="${d.id}"><select data-status="${d.id}">${statuses.map(s=>`<option ${s===x.status?'selected':''}>${s}</option>`).join('')}</select><button class="btn btn-primary" data-save="${d.id}">حفظ</button></div></article>`}).join('')}catch(e){console.error(e);$('adminOrders').innerHTML='<div class="notice">تعذر تحميل الطلبات. تأكد من نشر قواعد Firestore وإنشاء صلاحية الإدارة.</div>'}}rders').ad
+
+function loadAdmin(){
+  const q=query(collection(db,'bookings'),orderBy('createdAt','desc'));
+
+  if(stopAdminListener) stopAdminListener();
+
+  stopAdminListener=onSnapshot(q,snap=>{
+    $('adminOrders').innerHTML=snap.empty
+      ? '<div class="notice">مفيش طلبات لحد دلوقتي.</div>'
+      : snap.docs.map(d=>{
+          const x=d.data();
+          return `<article class="order">
+            <div class="order-top"><b>${esc(x.serviceType)} · ${esc(x.phone)}</b><span class="status">${esc(x.status)}</span></div>
+            <p>العميل: ${esc(x.email)} · UID: ${esc(x.ownerUid)}</p>
+            <p>من: ${esc(x.pickup)} ← إلى: ${esc(x.dropoff)}</p>
+            <p>الموعد: ${esc(x.when||'غير محدد')} · التفاصيل: ${esc(x.details||'لا توجد')}</p>
+            <p>قرار العميل: ${x.customerDecision==='approved'?'موافق':x.customerDecision==='rejected'?'رافض':'لم يرد بعد'}</p>
+            <div class="admin-controls">
+              <input type="number" min="0" step="1" placeholder="السعر بالجنيه" value="${x.quote??''}" data-quote="${d.id}">
+              <select data-status="${d.id}">${statuses.map(s=>`<option ${s===x.status?'selected':''}>${s}</option>`).join('')}</select>
+              <button class="btn btn-primary" data-save="${d.id}">حفظ</button>
+            </div>
+          </article>`;
+        }).join('');
+  },e=>{
+    console.error(e);
+    $('adminOrders').innerHTML='<div class="notice">تعذر تحميل الطلبات. راجع قواعد Firestore.</div>';
+  });
+}
