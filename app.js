@@ -217,12 +217,14 @@ $('ordersList').addEventListener('click',async e=>{
   if(!b)return;
 
   try{
-    await updateDoc(doc(db,'bookings',b.dataset.id),{
-      customerDecision:b.dataset.decision,
-      updatedAt:serverTimestamp()
-    });
+await updateDoc(doc(db,'bookings',b.dataset.id),{
+  customerDecision:b.dataset.decision,
+  status:b.dataset.decision==='approved'?'تم التأكيد':'ملغي',
+  updatedAt:serverTimestamp()
+});    
+          
 
-    toast('تم تسجيل ردك');
+    
     loadMine();
   }catch(err){
     toast('تعذر تسجيل الرد');
